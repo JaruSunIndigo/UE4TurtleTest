@@ -46,13 +46,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
 
+	/** Interaction range (Need set in Blueptint) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	float InteractRayLength;
+
 	/** Whether to use motion controller location for aiming. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	uint8 bUsingMotionControllers : 1;
 
 protected:
 
-	/* Interact action */
+	/** Interact action */
 	void OnInteract();
 
 	/** Resets HMD orientation and position in VR. */

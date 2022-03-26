@@ -91,7 +91,7 @@ void AUE4TurtlesTestCharacter::OnInteract() {
 
 	FVector RayStartPoint = FirstPersonCameraComponent->GetComponentLocation();
 	FVector ForewardVector = FirstPersonCameraComponent->GetForwardVector();
-	FVector RayEndPoint = (ForewardVector * 2000.f) + RayStartPoint;
+	FVector RayEndPoint = (ForewardVector * InteractRayLength) + RayStartPoint;
 
 	FCollisionQueryParams CollisionQueryParams;
 	CollisionQueryParams.AddIgnoredActor(this->GetOwner());
@@ -102,9 +102,6 @@ void AUE4TurtlesTestCharacter::OnInteract() {
 
 		TWeakObjectPtr<AActor> Actor = RayHitResult.Actor;
 		
-		TArray<AActor*> Actors;
-		UGameplayStatics::GetAllActorsWithInterface(GWorld, UInteractableInterface::StaticClass(), Actors);
-
 		if (Actor->Implements<UInteractableInterface>()) {
 			IInteractableInterface::Execute_PerformInteract(Actor.Get());
 		}
