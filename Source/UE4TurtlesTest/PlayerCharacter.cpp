@@ -96,13 +96,21 @@ void APlayerCharacter::OnInteract() {
 		//DrawDebugLine(GetWorld(), RayStartPoint, RayEndPoint, FColor::Blue, true);
 
 		TWeakObjectPtr<AActor> Actor = RayHitResult.Actor;
-		
-		//Find actor implements interface UInteractableInterface
-		if (Actor->Implements<UInteractableInterface>()) {
 
-			bInteractSuccess = true;
+		if (Actor.IsValid()) {
 
-			IInteractableInterface::Execute_PerformInteract(Actor.Get());
+			//Find actor implements interface UInteractableInterface
+			if (Actor->Implements<UInteractableInterface>()) {
+
+				bInteractSuccess = true;
+
+				AActor* ActorRef = Actor.Get();
+
+				if (ActorRef != nullptr) {
+					IInteractableInterface::Execute_PerformInteract(ActorRef);
+				}
+			}
+
 		}
 
 	}
