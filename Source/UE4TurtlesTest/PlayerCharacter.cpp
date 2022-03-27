@@ -58,10 +58,11 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	// Bind interact event
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::OnInteract);
 
+	// Bind interact event
+	PlayerInputComponent->BindAction("Exit", IE_Pressed, this, &APlayerCharacter::OnExit);
+
 	// Enable touchscreen input
 	EnableTouchscreenMovement(PlayerInputComponent);
-
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &APlayerCharacter::OnResetVR);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
@@ -91,54 +92,72 @@ void APlayerCharacter::OnInteract() {
 
 	bool bInteractSuccess = false;
 
-	if (GetWorld()->LineTraceSingleByChannel(RayHitResult, RayStartPoint, RayEndPoint, ECC_Visibility, CollisionQueryParams)) {
-		
-		//DrawDebugLine(GetWorld(), RayStartPoint, RayEndPoint, FColor::Blue, true);
+	UWorld* World = GetWorld();
 
-		TWeakObjectPtr<AActor> Actor = RayHitResult.Actor;
+	if (World != nullptr) {
 
-		if (Actor.IsValid()) {
+		if (World->LineTraceSingleByChannel(RayHitResult, RayStartPoint, RayEndPoint, ECC_Visibility, CollisionQueryParams)) {
 
-			//Find actor implements interface UInteractableInterface
-			if (Actor->Implements<UInteractableInterface>()) {
+			//DrawDebugLine(GetWorld(), RayStartPoint, RayEndPoint, FColor::Blue, true);
 
-				bInteractSuccess = true;
+			TWeakObjectPtr<AActor> Actor = RayHitResult.Actor;
 
-				AActor* ActorRef = Actor.Get();
+			if (Actor.IsValid()) {
 
-				if (ActorRef != nullptr) {
-					IInteractableInterface::Execute_PerformInteract(ActorRef);
+				//Find actor implements interface UInteractableInterface
+				if (Actor->Implements<UInteractableInterface>()) {
+
+					bInteractSuccess = true;
+
+					AActor* ActorRef = Actor.Get();
+
+					if (ActorRef != nullptr) {
+						IInteractableInterface::Execute_PerformInteract(ActorRef);
+					}
 				}
+
 			}
 
 		}
+		else
+		{
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("To far from target to interact"));
+			}
+		}
 
-	}
-	else 
-	{
-		if (GEngine) {
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("To far from target to interact"));
+
+
+		//Play interaction sounds
+		if (bInteractSuccess)
+		{
+			if (IsValid(AllowInteractionSound)) {
+				UGameplayStatics::PlaySound2D(GetWorld(), AllowInteractionSound, 1.0f, 1.0f);
+			}
 		}
-	}
-	
-	//Play interaction sounds
-	if (bInteractSuccess)
-	{
-		if (IsValid(AllowInteractionSound)) {
-			UGameplayStatics::PlaySound2D(GetWorld(), AllowInteractionSound, 1.0f, 1.0f);
+		else
+		{
+			if (IsValid(DenyInteractionSound)) {
+				UGameplayStatics::PlaySound2D(GetWorld(), DenyInteractionSound, 1.0f, 1.0f);
+			}
 		}
-	}
-	else
-	{
-		if (IsValid(DenyInteractionSound)) {
-			UGameplayStatics::PlaySound2D(GetWorld(), DenyInteractionSound, 1.0f, 1.0f);
-		}
+
 	}
 }
 
-void APlayerCharacter::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+void APlayerCharacter::OnExit() {
+	
+	UWorld* World = GetWorld();
+
+	if (World != nullptr) {
+
+		if (World->IsGameWorld()) {
+
+			FGenericPlatformMisc::RequestExit(false);
+
+		}
+
+	}
 }
 
 void APlayerCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)

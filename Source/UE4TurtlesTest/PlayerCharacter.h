@@ -59,8 +59,8 @@ protected:
 	/** Handle interaction event */
 	void OnInteract();
 
-	/** Resets HMD orientation and position in VR. */
-	void OnResetVR();
+	/** Handle exit event */
+	void OnExit();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
