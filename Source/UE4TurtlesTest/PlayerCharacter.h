@@ -14,13 +14,13 @@ class UMotionControllerComponent;
 class UAnimMontage;
 class USoundBase;
 
-UCLASS(config=Game, Category = "Turtles")
+UCLASS(config=Game, Category = "Turtles|Characters")
 class APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 	/** First person camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
 
 public:
@@ -31,24 +31,32 @@ protected:
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	float BaseTurnRate;
 
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	float BaseLookUpRate;
 
-	/** Interaction range (Need set in Blueptint) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	float InteractRayLength;
+	/** Interaction range */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
+	float InteractionRayLength;
 
 	/** Whether to use motion controller location for aiming. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
 	uint8 bUsingMotionControllers : 1;
+
+	/** Sound triggered on successful interaction */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds")
+	USoundBase* AllowInteractionSound;
+
+	/** Sound triggered on failed interaction */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sounds")
+	USoundBase* DenyInteractionSound;
 
 protected:
 
-	/** Interact action */
+	/** Handle interaction event */
 	void OnInteract();
 
 	/** Resets HMD orientation and position in VR. */
@@ -101,7 +109,7 @@ protected:
 
 public:
 
-	/** Returns FirstPersonCameraComponent subobject **/
+	/** Returns FirstPersonCameraComponent subobject */
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 };

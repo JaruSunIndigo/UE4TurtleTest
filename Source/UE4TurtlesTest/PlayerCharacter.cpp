@@ -23,16 +23,18 @@ APlayerCharacter::APlayerCharacter()
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
-	// set our turn rates for input
+	// Set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f)); // Position the camera
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f));
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
+	// Set default interation range
+	InteractionRayLength = 500.f;
 }
 
 void APlayerCharacter::BeginPlay()
@@ -46,7 +48,7 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// set up gameplay key bindings
+	// Set up gameplay key bindings
 	check(PlayerInputComponent);
 
 	// Bind jump events
@@ -74,29 +76,55 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAxis("LookUpRate", this, &APlayerCharacter::LookUpAtRate);
 }
 
-//Custom interact action (E button)
+//Custom interact action
 void APlayerCharacter::OnInteract() {
-
 
 	FHitResult RayHitResult;
 
+	//Cast ray from Camera center
 	FVector RayStartPoint = FirstPersonCameraComponent->GetComponentLocation();
 	FVector ForewardVector = FirstPersonCameraComponent->GetForwardVector();
-	FVector RayEndPoint = (ForewardVector * InteractRayLength) + RayStartPoint;
+	FVector RayEndPoint = (ForewardVector * InteractionRayLength) + RayStartPoint;
 
 	FCollisionQueryParams CollisionQueryParams;
 	CollisionQueryParams.AddIgnoredActor(this->GetOwner());
 
+	bool bInteractSuccess = false;
+
 	if (GetWorld()->LineTraceSingleByChannel(RayHitResult, RayStartPoint, RayEndPoint, ECC_Visibility, CollisionQueryParams)) {
 		
-		DrawDebugLine(GetWorld(), RayStartPoint, RayEndPoint, FColor::Blue, true);
+		//DrawDebugLine(GetWorld(), RayStartPoint, RayEndPoint, FColor::Blue, true);
 
 		TWeakObjectPtr<AActor> Actor = RayHitResult.Actor;
 		
+		//Find actor implements interface UInteractableInterface
 		if (Actor->Implements<UInteractableInterface>()) {
+
+			bInteractSuccess = true;
+
 			IInteractableInterface::Execute_PerformInteract(Actor.Get());
 		}
 
+	}
+	else 
+	{
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("To far from target to interact"));
+		}
+	}
+	
+	//Play interaction sounds
+	if (bInteractSuccess)
+	{
+		if (IsValid(AllowInteractionSound)) {
+			UGameplayStatics::PlaySound2D(GetWorld(), AllowInteractionSound, 1.0f, 1.0f);
+		}
+	}
+	else
+	{
+		if (IsValid(DenyInteractionSound)) {
+			UGameplayStatics::PlaySound2D(GetWorld(), DenyInteractionSound, 1.0f, 1.0f);
+		}
 	}
 }
 
@@ -107,31 +135,27 @@ void APlayerCharacter::OnResetVR()
 
 void APlayerCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
-	if (TouchItem.bIsPressed == true)
+	if (!TouchItem.bIsPressed)
 	{
-		return;
+		TouchItem.bIsPressed = true;
+		TouchItem.FingerIndex = FingerIndex;
+		TouchItem.Location = Location;
+		TouchItem.bMoved = false;
 	}
-
-	TouchItem.bIsPressed = true;
-	TouchItem.FingerIndex = FingerIndex;
-	TouchItem.Location = Location;
-	TouchItem.bMoved = false;
 }
 
 void APlayerCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
-	if (TouchItem.bIsPressed == false)
+	if (TouchItem.bIsPressed)
 	{
-		return;
+		TouchItem.bIsPressed = false;
 	}
-	TouchItem.bIsPressed = false;
 }
 
 void APlayerCharacter::MoveForward(float Value)
 {
 	if (Value != 0.0f)
 	{
-		// add movement in that direction
 		AddMovementInput(GetActorForwardVector(), Value);
 	}
 }
@@ -140,32 +164,31 @@ void APlayerCharacter::MoveRight(float Value)
 {
 	if (Value != 0.0f)
 	{
-		// add movement in that direction
 		AddMovementInput(GetActorRightVector(), Value);
 	}
 }
 
 void APlayerCharacter::TurnAtRate(float Rate)
 {
-	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 }
 
 void APlayerCharacter::LookUpAtRate(float Rate)
 {
-	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
 bool APlayerCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)
 {
+	bool result = false;
+
 	if (FPlatformMisc::SupportsTouchInput() || GetDefault<UInputSettings>()->bUseMouseForTouch)
 	{
 		PlayerInputComponent->BindTouch(EInputEvent::IE_Pressed, this, &APlayerCharacter::BeginTouch);
 		PlayerInputComponent->BindTouch(EInputEvent::IE_Released, this, &APlayerCharacter::EndTouch);
 
-		return true;
+		result = true;
 	}
 
-	return false;
+	return result;
 }

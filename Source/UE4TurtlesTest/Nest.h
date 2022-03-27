@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Nest.generated.h"
 
-UCLASS()
+UCLASS(Category = "Turtles|Actors")
 class UE4TURTLESTEST_API ANest : public AActor
 {
 	GENERATED_BODY()

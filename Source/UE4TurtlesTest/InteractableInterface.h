@@ -7,7 +7,7 @@
 #include "InteractableInterface.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI, Blueprintable, Category = "Interfaces")
+UINTERFACE(MinimalAPI, Blueprintable, Category = "Turtles|Interfaces")
 class UInteractableInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -24,6 +24,8 @@ class UE4TURTLESTEST_API IInteractableInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "RayCasting")
+	UFUNCTION(BlueprintImplementableEvent, Category = "Turtles|Interacting")
 	void PerformInteract();
+
+	virtual void PerformInteract_Implementation();
 };

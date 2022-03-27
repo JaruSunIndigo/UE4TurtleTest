@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "TurtleCharacter.generated.h"
 
-UCLASS()
+UCLASS(Category = "Turtles|Characters")
 class UE4TURTLESTEST_API ATurtleCharacter : public ACharacter
 {
 	GENERATED_BODY()
